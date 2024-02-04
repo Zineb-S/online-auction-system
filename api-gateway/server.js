@@ -13,24 +13,58 @@ app.use('/api/users', createProxyMiddleware({
   target: process.env.USER_SERVICE_URL, // Target host of user service
   changeOrigin: true,
   onProxyReq: (proxyReq, req, res) => {
-      console.log(`[Proxy] Request to: ${req.path}`);
-      console.log(`[Proxy] Forwarding to: ${process.env.USER_SERVICE_URL}${req.path}`);
-      // Log the request headers
-      console.log(`[Proxy] Request Headers: `, proxyReq.getHeaders());
-      console.log('[Proxy] Request Body:', req.body);
+    if (req.body) {
+      const bodyData = JSON.stringify(req.body);
+      proxyReq.setHeader('Content-Type', 'application/json');
+      proxyReq.setHeader('Content-Length', Buffer.from(bodyData).length);
+      proxyReq.write(bodyData);
+    }
+  },
+}));
+// Proxy setup
+app.use('/api/items', createProxyMiddleware({
+  target: process.env.AUCTION_SERVICE_URL, // Target host of user service
+  changeOrigin: true,
+  onProxyReq: (proxyReq, req, res) => {
+    if (req.body) {
+      const bodyData = JSON.stringify(req.body);
+      proxyReq.setHeader('Content-Type', 'application/json');
+      proxyReq.setHeader('Content-Length', Buffer.from(bodyData).length);
+      proxyReq.write(bodyData);
+    }
+  },
+}));
+// Proxy setup
+app.use('/api/auctions', createProxyMiddleware({
+  target: process.env.AUCTION_SERVICE_URL, // Target host of user service
+  changeOrigin: true,
+  onProxyReq: (proxyReq, req, res) => {
+    if (req.body) {
+      const bodyData = JSON.stringify(req.body);
+      proxyReq.setHeader('Content-Type', 'application/json');
+      proxyReq.setHeader('Content-Length', Buffer.from(bodyData).length);
+      proxyReq.write(bodyData);
+    }
+  },
+}));
+app.use('/api/bids', createProxyMiddleware({
+  target: process.env.BID_SERVICE_URL, 
+  changeOrigin: true,
+  onProxyReq: (proxyReq, req, res) => {
+    // Forward the Authorization header
+    if (req.headers.authorization) {
+      proxyReq.setHeader('Authorization', req.headers.authorization);
+    }
+    if (req.body) {
+      const bodyData = JSON.stringify(req.body);
+      proxyReq.setHeader('Content-Type', 'application/json');
+      proxyReq.setHeader('Content-Length', Buffer.from(bodyData).length);
+      proxyReq.write(bodyData);
+    }
+    
   },
   
-  onProxyRes: (proxyRes, req, res) => {
-      console.log(`[Proxy] Received response for: ${req.path}`);
-      // Log the status code of the proxied request's response
-      console.log(`[Proxy] Response Status: ${proxyRes.statusCode}`);
-  },
-  onError: (err, req, res) => {
-      console.log(`[Proxy] Error occurred while proxying: ${req.path}`);
-      console.log(err);
-  }
 }));
-
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
