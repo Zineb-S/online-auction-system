@@ -82,4 +82,16 @@ exports.getAllBids = async (req, res) => {
       res.status(500).send(error.message);
     }
   };
-  
+
+// Fetch bids made by the authenticated user
+exports.getUserBids = async (req, res) => {
+  try {
+    // req.user is set by your authenticate middleware
+    const userId = req.user._id;
+    const userBids = await Bid.find({ bidder: userId });
+    res.json(userBids);
+  } catch (error) {
+    console.error(`Error fetching user bids: ${error}`);
+    res.status(500).send({ message: "Error fetching user bids", error: error.message });
+  }
+};

@@ -24,15 +24,17 @@ const NavigationBar = () => {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             <Nav.Link href="/auctions">Auctions</Nav.Link>
+            <Nav.Link href="/live-auctions">Live Now</Nav.Link>
             {!isAuthenticated ? (
               <>
                 <Nav.Link href="/signup">Create an account</Nav.Link>
                 <Nav.Link href="/login">Access your account</Nav.Link>
               </>
             ) : (
+              <><Nav.Link href="/profile">Profile</Nav.Link>
               <Button variant="outline-danger" onClick={handleLogout}>
-                Logout
-              </Button>
+                  Logout
+                </Button></>
             )}
           </Nav>
         </Navbar.Collapse>

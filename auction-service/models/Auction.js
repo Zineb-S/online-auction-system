@@ -8,7 +8,7 @@ const auctionSchema = new mongoose.Schema({
   winner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Reference to User model, optional initially
   bids: [{
     bidder: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    amount: { type: Number, required: true },
+    amount: { type: Number },
     time: { type: Date, default: Date.now }
   }]
 });

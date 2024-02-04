@@ -58,3 +58,11 @@ exports.deleteAuction = async (req, res) => {
     res.status(500).send(error.message);
   }
 };
+exports.getLiveAuctions = async (req, res) => {
+  try {
+    const liveAuctions = await Auction.find({ status: 'live' });
+    res.json(liveAuctions);
+  } catch (error) {
+    res.status(500).send("Error fetching live auctions: " + error.message);
+  }
+};

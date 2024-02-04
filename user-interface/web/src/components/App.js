@@ -8,14 +8,19 @@ import AuctionDetail from './AuctionDetail';
 import BidList from './BidList';
 import { ProtectedRoute } from './ProtectedRoute';
 import 'react-toastify/dist/ReactToastify.css'; 
+import Homepage from './Homepage';
+import Profile from './Profile';
+import LiveAuctions from './LiveAuctions';
 function App() {
   return (
     <Router>
       <NavigationBar />
-      <Routes>
+      <Routes> 
+        <Route path='/' element={<Homepage/>}/>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/auctions" element={<AuctionList />} />
+        <Route path="/live-auctions" element={<LiveAuctions />} />
         <Route path="/auctions/:auctionId" element={
           <ProtectedRoute>
             <AuctionDetail />
@@ -26,6 +31,7 @@ function App() {
             <BidList />
           </ProtectedRoute>
         } />
+       <Route path="/profile" element={<ProtectedRoute><Profile/></ProtectedRoute>} />
       </Routes>
     </Router>
   );

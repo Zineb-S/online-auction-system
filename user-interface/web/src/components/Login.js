@@ -35,7 +35,7 @@ const buttonStyle = {
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const navigate = useNavigate(); // Get the navigate function
+  const navigate = useNavigate(); // Initialize the navigate function
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -43,17 +43,17 @@ const Login = () => {
       const response = await axios.post('http://localhost:3001/api/users/login', { email, password });
       console.log('Login Success:', response.data);
       localStorage.setItem('token', response.data.token); // Save token to localStorage
-      navigate('/auctions'); // Redirect to the auctions page
+      toast.success('Logged in successfully'); // Display success toast
+      navigate('/auctions'); // Redirect to /auctions
     } catch (error) {
-      toast.error(" You are having trouble logging in :( ")
       console.error('Login Error:', error.response?.data || 'An unknown error occurred');
+      toast.error('Login failed. Please check your credentials.'); // Display error toast
     }
   };
 
-
   return (
-    <><ToastContainer />
     <div style={loginStyle}>
+      <ToastContainer />
       <h2 style={{ textAlign: 'center' }}>Login</h2>
       <form onSubmit={handleSubmit}>
         <input
@@ -62,17 +62,19 @@ const Login = () => {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email"
           required
-          style={inputStyle} />
+          style={inputStyle}
+        />
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
           required
-          style={inputStyle} />
+          style={inputStyle}
+        />
         <button type="submit" style={buttonStyle}>Login</button>
       </form>
-    </div></>
+    </div>
   );
 };
 

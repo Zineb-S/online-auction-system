@@ -6,10 +6,10 @@ import Card from 'react-bootstrap/Card';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import { ToastContainer, toast } from 'react-toastify';
+
 const AuctionList = () => {
   const [auctions, setAuctions] = useState([]);
-
+  
   useEffect(() => {
     const fetchAuctions = async () => {
       try {
@@ -22,9 +22,9 @@ const AuctionList = () => {
 
     fetchAuctions();
   }, []);
-  toast.success("Logged in succcessfully ! ")
+ 
   return (
-    <><ToastContainer />
+    <>
     <Container>
           <h1 className="mt-5">Auctions</h1>
           <Row xs={1} md={2} lg={3} className="g-4 mt-3">
@@ -32,7 +32,7 @@ const AuctionList = () => {
                   <Col key={auction._id}>
                       <Card>
                           {/* Assuming you have images, otherwise you can remove the Card.Img component */}
-                          <Card.Img variant="top" src="holder.js/100px180" />
+                          <Card.Img variant="top" src="https://geauction.com/wp-content/uploads/2018/07/5-Auction-Tips-for-Beginners2.jpg" />
                           <Card.Body>
                               <Card.Title>Auction {index + 1}</Card.Title>
                               <Card.Text>

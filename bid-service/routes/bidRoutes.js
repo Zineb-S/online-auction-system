@@ -5,6 +5,7 @@ const router = express.Router();
 
 // This route should come before any '/:param' routes
 router.get('/all', authenticate, bidController.getAllBids); // Get all bids
+router.get('/user-bids', authenticate, bidController.getUserBids);
 router.post('/', authenticate, bidController.placeBid); // Place a bid
 router.get('/:itemId', authenticate, (req, res) => {
     console.log("Received itemId:", req.params.itemId);
