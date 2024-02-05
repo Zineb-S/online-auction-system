@@ -1,51 +1,56 @@
-// LiveAuctionDetail.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { Card, Button, Container, Row, Col, Accordion, Form } from 'react-bootstrap';
 import io from 'socket.io-client';
 
-// Assuming your WebSocket server is running on the same server as your auction service
 const socket = io.connect('http://localhost:3003');
 
 const LiveAuctionDetail = () => {
     const { auctionId } = useParams();
     const [auction, setAuction] = useState(null);
-    const [bids, setBids] = useState({}); // Object to hold bids for each item
+    const [highestBids, setHighestBids] = useState({}); // State to hold the highest bids for each item
 
     useEffect(() => {
-        const fetchAuctionDetail = async () => {
+        const fetchAuctionDetailAndBids = async () => {
             try {
-                const response = await axios.get(`http://localhost:3001/api/auctions/${auctionId}`);
-                setAuction(response.data);
+                // Fetch auction details
+                const auctionResponse = await axios.get(`http://localhost:3001/api/auctions/${auctionId}`);
+                setAuction(auctionResponse.data);
 
-                // Initialize bids state with each item's current highest bid
-                const initialBids = {};
-                await Promise.all(response.data.items.map(async (item) => {
-                    const highestBidResponse = await axios.get(`http://localhost:3001/api/bids/winning/${item._id}`);
-                    initialBids[item._id] = highestBidResponse.data.amount || 0;
-                }));
-                setBids(initialBids);
+                // Fetch highest bids for each item in the auction
+                const highestBidsUpdate = {};
+                for (let item of auctionResponse.data.items) {
+                    try {
+                        const highestBidResponse = await axios.get(`http://localhost:3001/api/bids/winning/${item._id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}`}} );
+                        // Update with the actual amount, ensure to parse if necessary
+                        highestBidsUpdate[item._id] = highestBidResponse.data.amount;
+                    } catch (error) {
+                        // Log error or handle as needed
+                        console.error(`Error fetching highest bid for item ${item._id}:`, error);
+                        highestBidsUpdate[item._id] = "Not Available"; // Default text if no bids found
+                    }
+                }
+                setHighestBids(highestBidsUpdate);
             } catch (error) {
                 console.error('Error fetching auction details:', error);
             }
         };
 
-        fetchAuctionDetail();
+        fetchAuctionDetailAndBids();
 
-        // Setup WebSocket listener for bid updates
         socket.on('bidUpdate', (data) => {
             if (data.auctionId === auctionId) {
-                setBids((prevBids) => ({
+                setHighestBids(prevBids => ({
                     ...prevBids,
-                    [data.itemId]: data.newHighestBid,
+                    [data.itemId]: data.newHighestBid
                 }));
             }
         });
 
         return () => socket.off('bidUpdate');
     }, [auctionId]);
-
+    
     const handleBidSubmit = async (itemId, bidAmount) => {
         console.log('Auction ID:', auctionId); // Debug log
         try {
@@ -80,7 +85,7 @@ const LiveAuctionDetail = () => {
                                 <Accordion.Body>
                                     <Card className="mb-3">
                                         <Card.Body>
-                                            <Card.Title>Current Highest Bid: ${bids[item._id]}</Card.Title>
+                                        <Card.Title>Current Highest Bid: ${highestBids[item._id]}</Card.Title>
                                             <Form onSubmit={(e) => {
                                                 e.preventDefault();
                                                 const bidAmount = e.target[`bidAmount-${item._id}`].value;
@@ -89,7 +94,7 @@ const LiveAuctionDetail = () => {
                                             }}>
                                                 <Form.Group controlId={`bidAmount-${item._id}`} className="mb-3">
                                                     <Form.Label>Place Your Bid</Form.Label>
-                                                    <Form.Control type="number" placeholder="Enter your bid" min={bids[item._id] + 1} required />
+                                                    <Form.Control type="number" placeholder="Enter your bid"  />
                                                 </Form.Group>
                                                 <Button variant="primary" type="submit">Bid</Button>
                                             </Form>
@@ -108,3 +113,4 @@ const LiveAuctionDetail = () => {
 };
 
 export default LiveAuctionDetail;
+//min={bids[item._id] + 1} required

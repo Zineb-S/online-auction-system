@@ -54,30 +54,34 @@ const fetchUserDetails = async (userId) => {
   }
 };
 
-// Place a bid function
 exports.placeBid = async (req, res) => {
   try {
-      const { item, amount, auctionId } = req.body; // Extract auctionId from the request
-      const bidder = req.user._id;
+    console.log(req.body);
+    const { auctionId, amount, item } = req.body; // Ensure you're destructuring item here as well
+    const bidder = req.user._id;
 
-      // Create and save the bid. Don't include auctionId here since it's not part of the Bid model.
-      const newBid = new Bid({ item, bidder, amount });
-      await newBid.save();
+    // Correctly include item when creating a new Bid
+    const newBid = new Bid({ item, bidder, amount }); // Ensure item is included
+    await newBid.save();
 
-      // Publish event with auctionId to RabbitMQ
-      await publishBidEvent({
-          item,
-          bidder,
-          amount,
-          auctionId, // Include auctionId for the auction service to process
-      });
+    const userDetails = await fetchUserDetails(bidder);
 
-      res.status(201).json(newBid);
+    // Publish event with auctionId but do not save auctionId in the Bid model
+    await publishBidEvent({
+        item,
+        auctionId, // Send along auctionId for the auction service to use
+        bidder,
+        amount,
+        userDetails,
+    });
+
+    res.status(201).json(newBid);
   } catch (error) {
-      console.error('Error placing bid:', error);
-      res.status(500).send(error.message);
+    console.error('Error placing bid:', error);
+    res.status(500).send(error.message);
   }
 };
+
 
 
 // View all bids for an item
