@@ -1,32 +1,84 @@
 const axios = require('axios');
 const Bid = require('../models/Bid');
-const USER_SERVICE_URL = 'http://localhost:3001/api/users/'; // Your User service URL
+const amqp = require('amqplib/callback_api');
+const USER_SERVICE_URL = 'http://localhost:3001/api/users/';
 
-// Helper function to fetch user details
+// Global channel for RabbitMQ
+let amqpChannel = null;
+
+// Initialize RabbitMQ connection and channel
+function initRabbitMQ() {
+  amqp.connect('amqp://localhost', function(error0, connection) {
+    if (error0) {
+      console.error('Failed to connect to RabbitMQ', error0);
+      // Retry after a delay
+      setTimeout(connectToRabbitMQ, 5000); // Retry after 5 seconds
+      return;
+    }
+    connection.createChannel(function(error1, channel) {
+      if (error1) {
+        throw error1;
+      }
+      const exchange = 'auction_exchange';
+      channel.assertExchange(exchange, 'direct', { durable: false });
+      amqpChannel = channel;
+      console.log("RabbitMQ Channel created successfully");
+    });
+  });
+}
+
+// Call initRabbitMQ when the application starts
+initRabbitMQ();
+
+// Helper function to publish bid event to RabbitMQ
+async function publishBidEvent(bidDetails) {
+  if (!amqpChannel) {
+    console.error("RabbitMQ channel not initialized");
+    return;
+  }
+
+  const exchange = 'auction_exchange';
+  // Using 'direct' exchange, routing key is 'bid_placed'
+  amqpChannel.publish(exchange, 'bid_placed', Buffer.from(JSON.stringify(bidDetails)));
+  console.log("Published bid event to RabbitMQ:", bidDetails);
+}
+
+// Function to fetch user details
 const fetchUserDetails = async (userId) => {
   try {
     const response = await axios.get(`${USER_SERVICE_URL}${userId}`);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching user details for user ID ${userId}:`, error.response?.data || error.message);
+    console.error(`Error fetching user details for user ID ${userId}:`, error);
     return null;
   }
 };
 
-// Place a bid
+// Place a bid function
 exports.placeBid = async (req, res) => {
   try {
-    const bidder = req.user._id; // Assuming this is set by your authentication middleware
-    const { item, amount } = req.body;
-    const newBid = new Bid({ item, bidder, amount });
-    await newBid.save();
-    const userDetails = await fetchUserDetails(bidder);
-    const bidWithUserDetails = { ...newBid.toObject(), userDetails };
-    res.status(201).json(bidWithUserDetails);
+      const { item, amount, auctionId } = req.body; // Extract auctionId from the request
+      const bidder = req.user._id;
+
+      // Create and save the bid. Don't include auctionId here since it's not part of the Bid model.
+      const newBid = new Bid({ item, bidder, amount });
+      await newBid.save();
+
+      // Publish event with auctionId to RabbitMQ
+      await publishBidEvent({
+          item,
+          bidder,
+          amount,
+          auctionId, // Include auctionId for the auction service to process
+      });
+
+      res.status(201).json(newBid);
   } catch (error) {
-    res.status(500).send(error.message);
+      console.error('Error placing bid:', error);
+      res.status(500).send(error.message);
   }
 };
+
 
 // View all bids for an item
 exports.viewBids = async (req, res) => {
@@ -54,8 +106,6 @@ exports.viewBids = async (req, res) => {
     res.status(500).send(error.message);
   }
 };
-
-
 // Get winning bid
 exports.getWinningBid = async (req, res) => {
   try {
@@ -95,3 +145,5 @@ exports.getUserBids = async (req, res) => {
     res.status(500).send({ message: "Error fetching user bids", error: error.message });
   }
 };
+
+
