@@ -10,7 +10,6 @@ const userSchema = new mongoose.Schema({
     cardNumber: String,
     expiryDate: String,
     cvv: String,
-    // Note: Storing credit card information requires you to be PCI compliant.
   },
   phoneNumber: String,
   reputationIndex: { type: Number, default: 0 }

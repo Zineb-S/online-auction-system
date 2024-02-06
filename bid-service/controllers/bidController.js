@@ -56,31 +56,43 @@ const fetchUserDetails = async (userId) => {
 
 const placeBid = async (req, res) => {
   try {
-    console.log(req.body);
-    const { auctionId, amount, item } = req.body; // Ensure you're destructuring item here as well
+    const { auctionId, amount, item } = req.body;
     const bidder = req.user._id;
 
-    // Correctly include item when creating a new Bid
-    const newBid = new Bid({ item, bidder, amount }); // Ensure item is included
+    // Save the new bid
+    const newBid = new Bid({ item, bidder, amount });
     await newBid.save();
+
+    // Fetch the latest highest bid for the item
+    const highestBid = await Bid.findOne({ item }).sort('-amount');
 
     const userDetails = await fetchUserDetails(bidder);
 
-    // Publish event with auctionId but do not save auctionId in the Bid model
+    // Ensure to check if highestBid exists and then use its amount
+    const highestBidAmount = highestBid ? highestBid.amount : amount;
+
     await publishBidEvent({
-        item,
-        auctionId, // Send along auctionId for the auction service to use
-        bidder,
-        amount,
-        userDetails,
-    }); 
-    io.emit('bidPlaced', { itemId: item, amount });
+      item,
+      auctionId,
+      bidder,
+      amount: highestBidAmount, // Use the highest bid amount
+      userDetails,
+    });
+
+    // Emit the new highest bid to all connected clients
+    io.emit('bidPlaced', {
+      itemId: item,
+      newHighestBid: highestBidAmount, // Emit the actual highest bid amount
+      auctionId: auctionId,
+    });
+
     res.status(201).json(newBid);
   } catch (error) {
     console.error('Error placing bid:', error);
     res.status(500).send(error.message);
   }
 };
+
 // View all bids for an item
 const viewBids = async (req, res) => {
   try {

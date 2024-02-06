@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Card, Button, Container, Row, Col, Accordion, Form } from 'react-bootstrap';
 import io from 'socket.io-client';
 
-const socket = io.connect('http://localhost:3003');
+const socket = io.connect('http://localhost:3004');
 
 const LiveAuctionDetail = () => {
     const { auctionId } = useParams();
@@ -14,21 +14,19 @@ const LiveAuctionDetail = () => {
     useEffect(() => {
         const fetchAuctionDetailAndBids = async () => {
             try {
-                // Fetch auction details
                 const auctionResponse = await axios.get(`http://localhost:3001/api/auctions/${auctionId}`);
                 setAuction(auctionResponse.data);
 
-                // Fetch highest bids for each item in the auction
                 const highestBidsUpdate = {};
                 for (let item of auctionResponse.data.items) {
                     try {
-                        const highestBidResponse = await axios.get(`http://localhost:3001/api/bids/winning/${item._id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}`}} );
-                        // Update with the actual amount, ensure to parse if necessary
+                        const highestBidResponse = await axios.get(`http://localhost:3001/api/bids/winning/${item._id}`, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}`}
+                        });
                         highestBidsUpdate[item._id] = highestBidResponse.data.amount;
                     } catch (error) {
-                        // Log error or handle as needed
                         console.error(`Error fetching highest bid for item ${item._id}:`, error);
-                        highestBidsUpdate[item._id] = "Not Available"; // Default text if no bids found
+                        highestBidsUpdate[item._id] = "Not Available";
                     }
                 }
                 setHighestBids(highestBidsUpdate);
@@ -39,23 +37,23 @@ const LiveAuctionDetail = () => {
 
         fetchAuctionDetailAndBids();
 
-           socket.on('bidUpdate', (data) => {
-        if (data.auctionId === auctionId) {
-            // Trigger fetch to get the latest highest bid for the item
-            axios.get(`http://localhost:3001/api/bids/winning/${data.itemId}`, { 
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            })
-            .then(response => {
+        // Listen for real-time bid updates
+        const updateHighestBid = (data) => {
+            if (data.auctionId === auctionId) {
                 setHighestBids(prevBids => ({
                     ...prevBids,
-                    [data.itemId]: response.data.amount // Assuming 'amount' is the bid amount
+                    [data.itemId]: data.newHighestBid
                 }));
-            })
-            .catch(error => console.error(`Error fetching updated bid for item ${data.itemId}:`, error));
-        }
-    });
-        return () => socket.off('bidUpdate');
-        
+            }
+        };
+
+        socket.on('bidPlaced', updateHighestBid);
+
+        // Clean up the effect by removing the socket listener
+        return () => {
+            socket.off('bidPlaced', updateHighestBid);
+        };
+
     }, [auctionId]);
     
     const handleBidSubmit = async (itemId, bidAmount) => {

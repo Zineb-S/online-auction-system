@@ -2,10 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const userRoutes = require('./routes/userRoutes'); // Make sure you have this file created
 const cors = require('cors');
-
-
-
-
 // Connect to MongoDB
 mongoose.connect('mongodb+srv://ynov:ynov@cluster0.qmykuhi.mongodb.net/users')
 .then(() => console.log('Connected to MongoDB'))

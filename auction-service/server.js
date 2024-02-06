@@ -29,8 +29,6 @@ app.use('/api/items', itemsRoutes);
 // MongoDB connection string
 const mongoDBConnectionString = 'mongodb+srv://ynov:ynov@cluster0.qmykuhi.mongodb.net/auctions';
 
-
-
 // Function to schedule auction status updates
 function scheduleAuctionStatusUpdates() {
   // This will check for auctions to update every 3 seconds
