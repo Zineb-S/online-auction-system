@@ -1,4 +1,4 @@
-const axios = require('axios');
+module.exports = function(io) {const axios = require('axios');
 const Bid = require('../models/Bid');
 const amqp = require('amqplib/callback_api');
 const USER_SERVICE_URL = 'http://localhost:3001/api/users/';
@@ -54,7 +54,7 @@ const fetchUserDetails = async (userId) => {
   }
 };
 
-exports.placeBid = async (req, res) => {
+const placeBid = async (req, res) => {
   try {
     console.log(req.body);
     const { auctionId, amount, item } = req.body; // Ensure you're destructuring item here as well
@@ -73,19 +73,16 @@ exports.placeBid = async (req, res) => {
         bidder,
         amount,
         userDetails,
-    });
-
+    }); 
+    io.emit('bidPlaced', { itemId: item, amount });
     res.status(201).json(newBid);
   } catch (error) {
     console.error('Error placing bid:', error);
     res.status(500).send(error.message);
   }
 };
-
-
-
 // View all bids for an item
-exports.viewBids = async (req, res) => {
+const viewBids = async (req, res) => {
   try {
     const { itemId } = req.params;
     let bids = await Bid.find({ item: itemId }).sort('-amount');
@@ -111,7 +108,7 @@ exports.viewBids = async (req, res) => {
   }
 };
 // Get winning bid
-exports.getWinningBid = async (req, res) => {
+const getWinningBid = async (req, res) => {
   try {
     const item  = req.params.itemId;
     const winningBid = await Bid.findOne({ item }).sort('-amount');
@@ -126,7 +123,7 @@ exports.getWinningBid = async (req, res) => {
   }
 };
 // Get all bids
-exports.getAllBids = async (req, res) => {
+const getAllBids = async (req, res) => {
     try {
       const bids = await Bid.find({});
       console.log("All Bids found:", bids);
@@ -138,7 +135,7 @@ exports.getAllBids = async (req, res) => {
   };
 
 // Fetch bids made by the authenticated user
-exports.getUserBids = async (req, res) => {
+const getUserBids = async (req, res) => {
   try {
     // req.user is set by your authenticate middleware
     const userId = req.user._id;
@@ -150,4 +147,8 @@ exports.getUserBids = async (req, res) => {
   }
 };
 
-
+return {
+  placeBid,viewBids,getWinningBid,getAllBids,getUserBids
+  // other functions
+};
+}

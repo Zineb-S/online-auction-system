@@ -29,15 +29,7 @@ app.use('/api/items', itemsRoutes);
 // MongoDB connection string
 const mongoDBConnectionString = 'mongodb+srv://ynov:ynov@cluster0.qmykuhi.mongodb.net/auctions';
 
-mongoose.connect(mongoDBConnectionString)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    server.listen(3003, () => {
-      console.log(`Server running on port 3003`);
-      scheduleAuctionStatusUpdates();
-    });
-  })
-  .catch((error) => console.error('MongoDB connection error:', error));
+
 
 // Function to schedule auction status updates
 function scheduleAuctionStatusUpdates() {
@@ -74,4 +66,12 @@ io.on('connection', (socket) => {
 });
 
 
- 
+ mongoose.connect(mongoDBConnectionString)
+  .then(() => {
+    console.log('Connected to MongoDB');
+    server.listen(3003, () => {
+      console.log(`Server running on port 3003`);
+      scheduleAuctionStatusUpdates();
+    });
+  })
+  .catch((error) => console.error('MongoDB connection error:', error));

@@ -39,16 +39,23 @@ const LiveAuctionDetail = () => {
 
         fetchAuctionDetailAndBids();
 
-        socket.on('bidUpdate', (data) => {
-            if (data.auctionId === auctionId) {
+           socket.on('bidUpdate', (data) => {
+        if (data.auctionId === auctionId) {
+            // Trigger fetch to get the latest highest bid for the item
+            axios.get(`http://localhost:3001/api/bids/winning/${data.itemId}`, { 
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            })
+            .then(response => {
                 setHighestBids(prevBids => ({
                     ...prevBids,
-                    [data.itemId]: data.newHighestBid
+                    [data.itemId]: response.data.amount // Assuming 'amount' is the bid amount
                 }));
-            }
-        });
-
+            })
+            .catch(error => console.error(`Error fetching updated bid for item ${data.itemId}:`, error));
+        }
+    });
         return () => socket.off('bidUpdate');
+        
     }, [auctionId]);
     
     const handleBidSubmit = async (itemId, bidAmount) => {
@@ -64,6 +71,14 @@ const LiveAuctionDetail = () => {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             console.log('Bid placed successfully'); // Debug log
+    
+            // Immediately update the highest bid for the item in the local state
+            setHighestBids(prevBids => ({
+                ...prevBids,
+                [itemId]: Math.max(prevBids[itemId] || 0, bidAmount) // Update with the new bid if it's higher
+            }));
+    
+            // Notify the server and other clients about the new bid
             socket.emit('placeBid', { auctionId, itemId, bid: bidAmount });
         } catch (error) {
             console.error('Error placing bid:', error);

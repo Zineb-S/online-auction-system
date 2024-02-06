@@ -1,5 +1,6 @@
-const express = require('express');
-const bidController = require('../controllers/bidController');
+module.exports = function(io) {
+  const express = require('express');
+const bidController = require('../controllers/bidController')(io);
 const authenticate = require('../middleware/auth'); // Ensure you import the authentication middleware
 const router = express.Router();
 
@@ -12,4 +13,5 @@ router.get('/:itemId', authenticate, (req, res) => {
     bidController.viewBids(req, res);
   });
   router.get('/winning/:itemId', authenticate, bidController.getWinningBid); // Get the winning bid for an item
-module.exports = router;
+return router;
+};
