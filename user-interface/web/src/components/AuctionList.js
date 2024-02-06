@@ -22,36 +22,36 @@ const AuctionList = () => {
 
     fetchAuctions();
   }, []);
+
+  // Filter auctions based on status
+  const filteredAuctions = auctions.filter(auction => auction.status === 'scheduled' || auction.status === 'ended');
  
   return (
-    <>
     <Container>
-          <h1 className="mt-5">Auctions</h1>
-          <Row xs={1} md={2} lg={3} className="g-4 mt-3">
-              {auctions.map((auction, index) => (
-                  <Col key={auction._id}>
-                      <Card>
-                          {/* Assuming you have images, otherwise you can remove the Card.Img component */}
-                          <Card.Img variant="top" src="https://geauction.com/wp-content/uploads/2018/07/5-Auction-Tips-for-Beginners2.jpg" />
-                          <Card.Body>
-                              <Card.Title>Auction {index + 1}</Card.Title>
-                              <Card.Text>
-                                  {/* Here you can add more details about the auction */}
-                                  Start Time: {new Date(auction.startTime).toLocaleString()}
-                                  <br />
-                                  End Time: {new Date(auction.endTime).toLocaleString()}
-                                  <br />
-                                  Status: {auction.status}
-                              </Card.Text>
-                              <Link to={`/auctions/${auction._id}`}>
-                                  <Button variant="primary">View Auction</Button>
-                              </Link>
-                          </Card.Body>
-                      </Card>
-                  </Col>
-              ))}
-          </Row>
-      </Container></>
+      <h1 className="mt-5">Auctions</h1>
+      <Row xs={1} md={2} lg={3} className="g-4 mt-3">
+          {filteredAuctions.map((auction, index) => (
+              <Col key={auction._id}>
+                  <Card>
+                      <Card.Img variant="top" src="https://geauction.com/wp-content/uploads/2018/07/5-Auction-Tips-for-Beginners2.jpg" />
+                      <Card.Body>
+                          <Card.Title>Auction {index + 1}</Card.Title>
+                          <Card.Text>
+                              Start Time: {new Date(auction.startTime).toLocaleString()}
+                              <br />
+                              End Time: {new Date(auction.endTime).toLocaleString()}
+                              <br />
+                              Status: {auction.status}
+                          </Card.Text>
+                          <Link to={`/auctions/${auction._id}`}>
+                              <Button variant="primary">View Auction</Button>
+                          </Link>
+                      </Card.Body>
+                  </Card>
+              </Col>
+          ))}
+      </Row>
+    </Container>
   );
 };
 

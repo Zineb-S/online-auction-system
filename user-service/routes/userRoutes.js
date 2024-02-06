@@ -26,6 +26,7 @@ router.post('/validate-token', async (req, res) => {
 router.post('/signup', userController.signup);
 router.post('/login', userController.login);
 router.get('/me', auth, userController.getProfile);
+router.post('/charge', auth, userController.createCharge);
 
 // Get all users
 router.get('/', userController.getAllUsers);
