@@ -47,9 +47,11 @@ const processPaymentForWinningBid = async (itemId, auctionId) => {
     const amount =winningBid.amount;
     const customer = winningBid.userDetails.stripeCustomerId;
     console.log(amount,customer)
-    const winningBidPayment = await axios.get(`http://localhost:3001/api/users/charge`,{ amount:amount , customer: customer});
+    const winningBidPayment = await axios.post(`http://localhost:3001/api/users/charge`,{ amount:amount , stripeCustomerId: customer}, {
+      headers: { Authorization: `Bearer ${globalAuthToken}` }
+    });
    
-    console.log(winningBidPayment.data)
+    console.log(winningBidPayment.data.success)
     
   } catch (error) {
     console.error(`Error processing payment for item ${itemId}:`, error);
