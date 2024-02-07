@@ -12,7 +12,13 @@ const stripe = Stripe('sk_test_51OglyFI5J9yjRqIR1za00VVy67hGuu3RTTKCUB0Gj8VUTTIC
 const axios = require('axios');
 const app = express();
 const server = http.createServer(app);
-const io = socketManager.init(server); // Make sure this is properly set up to initialize socket.io
+const io = socketManager.init(server);
+
+const Mailjet = require('node-mailjet');
+const mailjet = new Mailjet({
+  apiKey: 'c8f78af8ba5c6611d4fbdfc246473ab3',
+  apiSecret: '8b234d04b6a4fc2c551ed7cfcbde2821'
+});
 
 app.use(cors());
 app.use(express.json());
@@ -31,6 +37,34 @@ app.use('/api/items', itemsRoutes);
 
 // MongoDB connection string
 const mongoDBConnectionString = 'mongodb+srv://ynov:ynov@cluster0.qmykuhi.mongodb.net/auctions';
+async function sendEmail(toEmail, subject, textContent, htmlContent) {
+  try {
+    const request = await mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [
+        {
+          From: {
+            Email: 'zineb.selmouni@ynov.com',
+            Name: 'Bex Technologies'
+          },
+          To: [
+            {
+              Email: toEmail
+            }
+          ],
+          Subject: subject,
+          TextPart: textContent,
+          HTMLPart: htmlContent,
+          TemplateID: 5674130,
+          TemplateLanguage: true,
+          
+        }
+      ]
+    });
+    console.log(request.body);
+  } catch (error) {
+    console.error('Error sending email:', error);
+  }
+}
 const processPaymentForWinningBid = async (itemId, auctionId) => {
   
     const response = await axios.post('http://localhost:3001/api/users/login', {
@@ -52,7 +86,19 @@ const processPaymentForWinningBid = async (itemId, auctionId) => {
     });
    
     console.log(winningBidPayment.data.success)
-    
+    if (winningBidPayment.data.success) {
+      // Email content
+      const emailSubject = 'Congratulations on Winning the Auction!';
+      const emailTextContent = `Dear ${winningBid.userDetails.firstName}, congratulations on winning the auction for item ID ${itemId}.`;
+      const emailHtmlContent = `<p>Dear ${winningBid.userDetails.firstName},</p><p>Congratulations on winning the auction for item ID ${itemId}.</p>`;
+  
+      // Send email
+      await sendEmail(
+        "zselmouni123@gmail.com",
+        emailSubject,
+        emailTextContent,
+        emailHtmlContent
+      )}
   } catch (error) {
     console.error(`Error processing payment for item ${itemId}:`, error);
   }
